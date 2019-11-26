@@ -1,0 +1,59 @@
+/**
+ * Handles the @topbot request command
+ */
+const rp = require('request-promise')
+const { getSlackWebClient } = require('../common/helper')
+const { getProjectByClientSlackThread } = require('../common/dbHelper')
+const slackWebClient = getSlackWebClient()
+
+module.exports.handler = async event => {
+  const body = JSON.parse(event.body)
+  const description = body.event.text.split(' ').slice(2).join(' ').trim() // Remove the first two words from text like "<user> request description"
+
+  // Check for empty description
+  if (description.length === 0) {
+    return slackWebClient.chat.postMessage({
+      thread_ts: body.event.ts,
+      channel: body.event.channel,
+      text: 'Project description cannot be empty. Please try again with a valid project description'
+    })
+  }
+
+  // Check if new project request is inside an existing project thread
+  if (body.event.thread_ts) {
+    const project = await getProjectByClientSlackThread(body.event.thread_ts)
+
+    if (project) {
+      return slackWebClient.chat.postMessage({
+        thread_ts: body.event.ts,
+        channel: body.event.channel,
+        text: 'A project already exists inside this thread. Please use a new thread to create your project'
+      })
+    }
+  }
+
+  // Get name of the requester. The event only contains requester id
+  const requester = (await slackWebClient.users.info({
+    user: body.event.user
+  })).user.real_name
+
+  // POST to TC central
+  await rp({
+    method: 'POST',
+    uri: `${process.env.CENTRAL_LAMBDA_URI}/request`,
+    body: {
+      description,
+      requester,
+      clientSlackThread: body.event.ts,
+      clientSlackChannel: body.event.channel
+    },
+    json: true
+  })
+
+  // Post acknowledgement to Client slack
+  return slackWebClient.chat.postMessage({
+    thread_ts: body.event.ts,
+    channel: body.event.channel,
+    text: 'Request posted to Topcoder'
+  })
+}

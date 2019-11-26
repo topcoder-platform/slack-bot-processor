@@ -1,0 +1,60 @@
+service: slack_lambda
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+
+  environment:
+    # AWS configuration
+    AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
+    AWS_REGION: FAKE_REGION
+    DYNAMODB_ENDPOINT: http://localhost:8000
+
+    # Client Slack bot configuration
+    ADMIN_USER_TOKEN: xoxp-751151625041-759423359383-845078868144-df39e70e54bf377a1da7d9366d590471
+    BOT_TOKEN: xoxb-751151625041-759783514870-rP7Aj9M8EcVsCNb9dSphcrKz
+    CLIENT_SIGNING_SECRET: 52810ea6b0cf1e67b2861be8bddce102
+    
+    # Central TC Lambda URI
+    CENTRAL_LAMBDA_URI: 'http://localhost:3000'
+
+functions:
+  events:
+    handler: src/functions/events.handler
+    description: Handles slack events
+    events:
+      - http:
+          path: slack/events
+          method: post
+
+  interactive:
+    handler: src/functions/interactive.handler
+    description: Handles interactive components
+    events:
+      - http:
+          path: slack/interactive
+          method: post
+
+  response:
+    handler: src/functions/response.handler
+    description: Handles project response
+    events:
+      - http:
+          path: response
+          method: post
+
+  approve:
+    handler: src/functions/approve.handler
+    description: Receives project approve
+    events:
+      - http:
+          path: approve
+          method: post
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    port: 3001
