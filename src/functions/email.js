@@ -2,6 +2,7 @@
  * Handles the @topbot email command
  */
 const rp = require('request-promise')
+const HttpStatus = require('http-status-codes')
 const config = require('config')
 const { getSlackWebClient } = require('../common/helper')
 const { getProjectByClientSlackThread } = require('../common/dbHelper')
@@ -77,21 +78,33 @@ module.exports.handler = async event => {
     })
   }
 
-  // POST to TC central
-  await rp({
-    method: 'POST',
-    uri: `${process.env.CENTRAL_LAMBDA_URI}/invite`,
-    body: {
-      projectId: project.id,
-      email
-    },
-    json: true
-  })
-
-  // Post to Client Slack on success
-  return slackWebClient.chat.postMessage({
-    thread_ts: body.event.ts,
-    channel: body.event.channel,
-    text: `User with ${email} has been successfully invited to the project, you can access the project at Connect.`
-  })
+  try {
+    // POST to TC central
+    await rp({
+      method: 'POST',
+      uri: `${process.env.CENTRAL_LAMBDA_URI}/invite`,
+      body: {
+        projectId: project.id,
+        email
+      },
+      json: true
+    })
+    // Post to Client Slack on success
+    return slackWebClient.chat.postMessage({
+      thread_ts: body.event.ts,
+      channel: body.event.channel,
+      text: `User with ${email} has been successfully invited to the project. The project can be accessed at ${config.get('CONNECT.PROJECT_URI')(project.connectProjectId)}`
+    })
+  } catch (e) {
+    // Email has already been invited
+    if (e.statusCode === HttpStatus.FORBIDDEN) {
+      return slackWebClient.chat.postMessage({
+        thread_ts: body.event.ts,
+        channel: body.event.channel,
+        text: `User with email ${email} has already been invited to the project. The project can be accessed at ${config.get('CONNECT.PROJECT_URI')(project.connectProjectId)}`
+      })
+    } else {
+      throw e
+    }
+  }
 }

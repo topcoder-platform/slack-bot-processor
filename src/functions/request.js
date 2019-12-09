@@ -2,6 +2,7 @@
  * Handles the @topbot request command
  */
 const rp = require('request-promise')
+const config = require('config')
 const { getSlackWebClient } = require('../common/helper')
 const { getProjectByClientSlackThread } = require('../common/dbHelper')
 const slackWebClient = getSlackWebClient()
@@ -45,7 +46,8 @@ module.exports.handler = async event => {
       description,
       requester,
       clientSlackThread: body.event.ts,
-      clientSlackChannel: body.event.channel
+      clientSlackChannel: body.event.channel,
+      platform: config.get('PLATFORMS.SLACK')
     },
     json: true
   })

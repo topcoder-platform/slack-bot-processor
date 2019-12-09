@@ -5,15 +5,10 @@
 const crypto = require('crypto')
 const { WebClient } = require('@slack/web-api')
 
-const slackWebClient = null
-
 /**
  * Returns an instance of the slack web api client
  */
 function getSlackWebClient () {
-  if (slackWebClient) {
-    return slackWebClient
-  }
   return new WebClient(process.env.BOT_TOKEN)
 }
 

@@ -11,6 +11,10 @@ module.exports = {
     APPROVED: 'APPROVED',
     RESPONDED: 'RESPONDED'
   },
+  // Supported messaging platforms
+  PLATFORMS: {
+    SLACK: 'slack'
+  },
   // Supported commands received as events
   COMMANDS: {
     REQUEST: 'request',
@@ -25,12 +29,17 @@ module.exports = {
   // Dynamodb table and index names
   DYNAMODB: {
     PROJECT_TABLE_NAME: 'projects',
-    CLIENT_SLACK_THREAD_INDEX: 'client_slack_thread_index'
+    CLIENT_SLACK_THREAD_INDEX: 'client_slack_thread_index',
+    TEAMS_CONVERSATION_ID_INDEX: 'teams_conversation_id_index'
   },
   // Winston log level
   LOG_LEVEL: 'error',
   // Common constants
   CONSTANTS: {
     PROJECT_DOES_NOT_EXIST: 'Project does not exist'
+  },
+  // Topcoder Connect configurations
+  CONNECT: {
+    PROJECT_URI: (projectId) => `https://connect.topcoder-dev.com/projects/${projectId}`
   }
 }

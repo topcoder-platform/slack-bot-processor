@@ -54,35 +54,42 @@ An acknowledgement is posted to `Client Workspace`
 
 ![](images/accept_ack.png)
 
-Message is posted to `Topcoder Workspace` along with an "Approve" button
+A message with `Provide project name` is posted to slack
 
-![](images/accept.png)
+![](images/provide_name.png)
 
-5. Click on "Approve"
+5. Click on the `Provide project button`. You will see a dialog where you can enter the project name. Add a name and click `Post`.
 
-Observe,
+![](images/provide_name_dialog.png)
 
-An acknowledgement is posted to `Topcoder Workspace`
+    Observe,
 
-![](images/approve_ack.png)
+    a. A project created message is posted to Slack
 
-Message is posted to `Client Workspace` telling them they can invite users now
+![](images/project_created.png)
 
-![](images/approve.png)
+    b. An acknowledgement is posted to TC Slack
 
-6. Issue an user invite command in `Client Workspace`
+![](images/project_created_slack.png)
 
-![](images/email.png)
+5. Provide an email using `@topbot email mayur.gmail.com` as a reply to the project created message
 
-Observe,
+![](images/provide_email.png)
 
-An acknowledgement is posted to `Client Workspace`
+    Observe,
 
-![](images/c_email.png)
+    a. An invite confirmation message is posted to Client Slack with a link to the Connect project
 
-A message is posted to `Topcoder Workspace`
+![](images/email_ack.png)
 
-![](images/t_email.png)
+
+    b. A message is posted to TC Slack saying user has been invited
+
+![](images/email_slack.png)
+
+6. Open the `Connect` link and login using your connect credentials. You will see the created project along with the invited user
+
+![](images/connect.png)
 
 
 
@@ -133,11 +140,7 @@ Help command,
 
 ![](images/ad_declined.png)
 
-6. Multipl clicks on Approve
-
-![](images/multiple_approved.png)
-
-7. Multiple clicks on "Post a response"
+6. Multiple clicks on "Post a response"
 
 ![](images/multiple_post.png)
 

@@ -41,6 +41,11 @@ async function handleCommand (command, event) {
         })
       }
     }
+
+    return {
+      statusCode: HttpStatus.OK
+    }
+    
   } catch (err) {
     const body = JSON.parse(event.body)
     await slackWebClient.chat.postMessage({
