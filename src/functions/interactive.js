@@ -5,38 +5,48 @@ const querystring = require('querystring')
 const HttpStatus = require('http-status-codes')
 const rp = require('request-promise')
 const config = require('config')
-const { getSlackWebClient, authenticateRequest } = require('../common/helper')
-const { updateProjectStatus, getProject } = require('../common/dbHelper')
+const { getSlackWebClient, decrypt } = require('../common/helper')
+const { updateProjectStatus, getProject, getClientByTeamId } = require('../common/dbHelper')
 const logger = require('../common/logger')
 
 const INTERACTIVE_MESSAGE_TYPES = config.get('INTERACTIVE_MESSAGE_TYPES')
-const slackWebClient = getSlackWebClient()
 
 module.exports.handler = async event => {
   try {
-    const isValidRequest = authenticateRequest(event)
-    if (!isValidRequest) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST
-      }
-    }
-
     // Payload is an URL encoded string
-    var payload = JSON.parse(querystring.decode(event.body).payload)
+    if (event.payload) {
+      var payload = JSON.parse(querystring.decode(event.body).payload)
+      const client = await getClientByTeamId(payload.team.id)
+      if (!client) {
+        return {
+          statusCode: HttpStatus.UNAUTHORIZED
+        }
+      }
+      var slackWebClient = getSlackWebClient(decrypt(client.botToken))
 
-    switch (payload.type) {
-      case 'interactive_message':
-        switch (payload.actions[0].name) {
-          case INTERACTIVE_MESSAGE_TYPES.ACCEPT:
-            await handleAccept(payload)
-            break
-          case INTERACTIVE_MESSAGE_TYPES.DECLINE:
-            await handleDecline(payload)
+      try {
+        switch (payload.type) {
+          case 'interactive_message':
+            switch (payload.actions[0].name) {
+              case INTERACTIVE_MESSAGE_TYPES.ACCEPT:
+                await handleAccept(payload, slackWebClient)
+                break
+              case INTERACTIVE_MESSAGE_TYPES.DECLINE:
+                await handleDecline(payload, slackWebClient)
+                break
+              default:
+            }
             break
           default:
         }
-        break
-      default:
+      } catch (e) {
+        // Post error to Client Slack
+        return slackWebClient.chat.postMessage({
+          thread_ts: payload.message_ts,
+          channel: payload.channel.id,
+          text: 'An error occured. Please try again'
+        })
+      }
     }
 
     return { // Acknowledge to Slack that the message was received
@@ -44,12 +54,6 @@ module.exports.handler = async event => {
     }
   } catch (err) {
     logger.logFullError(err)
-    // Post error to Client Slack
-    return slackWebClient.chat.postMessage({
-      thread_ts: payload.message_ts,
-      channel: payload.channel.id,
-      text: 'An error occured. Please try again'
-    })
   }
 }
 
@@ -57,7 +61,7 @@ module.exports.handler = async event => {
  * Handles click on the Accept button
  * @param {Object} payload
  */
-async function handleAccept (payload) {
+async function handleAccept (payload, slackWebClient) {
   // Get project
   const projectId = payload.callback_id
   const project = await getProject(projectId)
@@ -122,7 +126,7 @@ async function handleAccept (payload) {
  * Handles click on Decline button
  * @param {Object} payload
  */
-async function handleDecline (payload) {
+async function handleDecline (payload, slackWebClient) {
   const projectId = payload.callback_id
   const project = await getProject(projectId)
 

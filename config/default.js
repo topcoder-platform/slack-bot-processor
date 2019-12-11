@@ -29,6 +29,7 @@ module.exports = {
   // Dynamodb table and index names
   DYNAMODB: {
     PROJECT_TABLE_NAME: 'projects',
+    SLACK_CLIENTS_TABLE_NAME: 'slack_clients',
     CLIENT_SLACK_THREAD_INDEX: 'client_slack_thread_index',
     TEAMS_CONVERSATION_ID_INDEX: 'teams_conversation_id_index'
   },

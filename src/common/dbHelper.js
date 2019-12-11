@@ -5,6 +5,7 @@
 const AWS = require('aws-sdk')
 const config = require('config')
 const projectsSchema = require('../tables/projects')
+const clientsSchema = require('../tables/clients')
 let documentClient = null
 
 /**
@@ -19,10 +20,15 @@ async function initialize () {
   })
 
   const dynamodb = new AWS.DynamoDB()
-  // Create table if it does not exist already
+  // Create tables if it does not exist already
+
   const list = await dynamodb.listTables().promise()
   if (!list.TableNames.includes(config.get('DYNAMODB.PROJECT_TABLE_NAME'))) {
     await dynamodb.createTable(projectsSchema).promise()
+  }
+
+  if (!list.TableNames.includes(config.get('DYNAMODB.SLACK_CLIENTS_TABLE_NAME'))) {
+    await dynamodb.createTable(clientsSchema).promise()
   }
 
   documentClient = new AWS.DynamoDB.DocumentClient()
@@ -114,11 +120,26 @@ async function getProjectByClientSlackThread (clientSlackThread) {
   })).Items[0])
 }
 
+/**
+ * Returns the client by team id
+ * @param {String} teamId
+ */
+async function getClientByTeamId (teamId) {
+  return ((await query({
+    TableName: config.get('DYNAMODB.SLACK_CLIENTS_TABLE_NAME'),
+    KeyConditionExpression: 'teamId = :teamIdVal',
+    ExpressionAttributeValues: {
+      ':teamIdVal': teamId
+    }
+  })).Items[0])
+}
+
 module.exports = {
   put,
   query,
   update,
   getProject,
   updateProjectStatus,
-  getProjectByClientSlackThread
+  getProjectByClientSlackThread,
+  getClientByTeamId
 }

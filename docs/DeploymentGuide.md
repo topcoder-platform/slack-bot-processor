@@ -6,9 +6,6 @@
 
 2. ngrok
 
-The instructions to deploy the bot are very similar to TC Central with few minor changes. Some key differences are marked with a tag, **DIFFERENT FROM TC CENTRAL**. Make sure to follow them.
-You will also need a new Slack workspace. You cannot reuse the workspace for TC Central.
-
 Follow the below instructions in order to fully deploy the bot locally,
 
 ## Dynamodb setup
@@ -31,33 +28,23 @@ If you already have dynamodb running, then you can skip the install and run step
 
 3. [Optional] You can view the contents of dynamodb in your browser using a tool like [dynamodb-admin](https://www.npmjs.com/package/dynamodb-admin)
 
-## Create a free Slack account
+##  TC Central Setup
 
-1. Create a slack account if you don't have one already. Click `Create a new workspace` [here](https://slack.com/get-started).
+In order to deploy Slack lambda, you will need to first deply TC Central. The Slack account created there will represent Topcoder slack. You will then need to create an app in that workspace. This app will then be installed by clients in their workspaces.
 
-2. Provide an email address and click confirm
-
-3. A verification code will be sent to your email, post the verification code back to the slack setup page
-
-4. Create a team and a project
-
-5. Click `Skip for now` if you don't want to add more users
-
-![](images/skip.png)
-
-6. You should see your team and your channel created
-
-![](images/created.png)
-
-## Create a Slack App
+## Create an app in Topcoder slack account
 
 1. Open the create app page, click [here](https://api.slack.com/apps?new_app=1)
 
-2. Provide a name and select a workspace
+2. Provide a name and select a workspace (This represents the Topcoder workspace)
 
 ![](images/create_app.png)
 
-3. **ENV** Go to app credentials from `Settings` -> `Basic Information`. Get the value of `Signing Secret` and provide it in `provider:environment:CLIENT_SIGNING_SECRET` field in `serverless.yml`
+3. **ENV** Go to app credentials from `Settings` -> `Basic Information`. 
+Update `serverless.yml` with the the values,
+Client id -> `provider:environment:CLIENT_ID` (**Make sure to use quotes around CLIENT_ID**)
+Client secret -> `provider:environment:CLIENT_SECRET`
+`Signing Secret` -> `provider:environment:CLIENT_SIGNING_SECRET` 
 
 ![](images/credentials.png)
 
@@ -65,38 +52,24 @@ If you already have dynamodb running, then you can skip the install and run step
 
 ![](images/add_bot_user.png)
 
-5. Click on `Features` -> `OAuth & Permissions` -> `Install App to Workspace`
-
-![](images/install.png)
-
-6. Click `Allow`
-
-![](images/allow.png)
-
-7. **DIFFERENT FROM TC CENTRAL** On the same page, go to `Scopes` -> `Select Permission Scopes` -> Add scope `bot`, `channels:write` and `user:read` and click `Save changes`. Reinstall the app by clicking the link on the top banner.
-
+5. Click on `Features` -> `OAuth & Permissions`, go to `Scopes` -> `Select Permission Scopes` -> Add scope `bot`, `channels:write` and `users:read` and click `Save changes`.
 ![](images/scopes.png)
 
-![](images/reinstall.png)
-
-8. **ENV** On success, you will see your `OAuth Access Token` and
- `Bot User OAuth Access Token` in `OAuth Tokens & Redirect URLs`. 
- 
- Copy `OAuth Access Token` and provide it in `provider:environment:ADMIN_USER_TOKEN` field in `serverless.yml`.
-
- Copy `Bot User OAuth Access Token` and provide it in `provider:environment:BOT_TOKEN` field in `serverless.yml`. 
+**Do not install the app into workspace. This app is meant to be installed in client workspace and not Topcoder workspace.**
 
 9. **ENV** Slack lambda needs to communicate with TC Central lambda. Set the URI of TC Central lambda in the `provider:environment:CENTRAL_LAMBDA_URI` field in `serverless.yml`. If you haven't already deployed TC Central lambda, you can deploy it at this port later after Slack lambda is deployed. 
     
  By default, TC Central lambda runs on port 3000. So if you are using defaults, you don't need to change this field.
 
-10. All the required environment values in `serverless.yml` should be filled now. It should look something like,
+10. `serverless.yml` should look something like,
     ```
+    service: slack_lambda
+
     provider:
     name: aws
     runtime: nodejs10.x
 
-      environment:
+    environment:
         # AWS configuration
         AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
         AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
@@ -104,12 +77,15 @@ If you already have dynamodb running, then you can skip the install and run step
         DYNAMODB_ENDPOINT: http://localhost:8000
 
         # Client Slack bot configuration
-        ADMIN_USER_TOKEN: xoxp-751151625041-759423359383-845078868144-df39e70e54bf377a1da7d9366d590471
-        BOT_TOKEN: xoxb-751151625041-759783514870-rP7Aj9M8EcVsCNb9dSphcrKz
+        CLIENT_ID: '751151625041.751156216241'
+        CLIENT_SECRET: f4adf8e2b83ac725cfdd7bfe3cc6941c
         CLIENT_SIGNING_SECRET: 52810ea6b0cf1e67b2861be8bddce102
         
         # Central TC Lambda URI
         CENTRAL_LAMBDA_URI: 'http://localhost:3000'
+
+        # Token encryption/decryption key
+        CRYPTO_KEY: '3i)!Pf#"kq-)C[;UN-AVQ/doOk,[24'
     ```
 
 ## Start Slack lambda server
@@ -151,9 +127,64 @@ To start another ngrok session just choose another region to run in by executing
 
 ![](images/interactive.png)
 
-## Setup slack workspace
+## Provide redirect url
 
-1. Invite the bot user `/invite @topbot` to any channel from which you want to launch project requests from
+1. Click on `Features` -> `OAuth & Permissions`, go to `Redirect URL's` -> `Add new redirect url`, provide value `NGROK_URL/auth/redirect` and click save.
+
+![](images/redirect_url.png)
+
+## Make app distributable publicly
+
+1. Go to https://api.slack.com/apps and click on the app that you created earlier in `Create a Slack App`
+
+2. Click on `Settings` -> `Manage distribution`. 
+Check `Remove Hard Coded Information`. The `Activate Public Distribution` button should now become enabled. Click it.
+
+![](images/public.png)
+
+3. **ENV** Copy the html code provided in the Embeddable Slack Button box and paste it into `serverless.yml` -> `provider:environment:ADD_TO_SLACK_BUTTON`.
+
+![](images/add_to_slack.png)
+
+**Restart server for the ADD_TO_SLACK_BUTTON env variable to take effect**
+
+## Create Client workspace
+
+### Create a free Slack account
+
+1. Create a slack account if you don't have one already. Click `Create a new workspace` [here](https://slack.com/get-started).
+
+2. Provide an email address and click confirm
+
+3. A verification code will be sent to your email, post the verification code back to the slack setup page
+
+4. Create a team and a project
+
+5. Click `Skip for now` if you don't want to add more users
+
+![](images/skip.png)
+
+6. You should see your team and your channel created
+
+![](images/created.png)
+
+### Install slack lambda to client workspace
+
+1. While logged in to client workspace account, open url `NGROK_URL/signin`. You should see th Add to Slack button.
+
+![](images/signin.png)
+
+2. Click the button, click "Allow" to install the bot to client workspace
+
+![](images/allow.png)
+
+3. On success, you will see a success message,
+
+![](images/oauth_success.png)
+
+### Setup slack channel
+
+1. Invite the bot user `/invite @topbot` to any channel from which you want to create project requests
 
 ## Setup TC Central lambda
 

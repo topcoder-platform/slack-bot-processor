@@ -3,11 +3,9 @@
  */
 const rp = require('request-promise')
 const config = require('config')
-const { getSlackWebClient } = require('../common/helper')
 const { getProjectByClientSlackThread } = require('../common/dbHelper')
-const slackWebClient = getSlackWebClient()
 
-module.exports.handler = async event => {
+module.exports.handler = async (event, slackWebClient) => {
   const body = JSON.parse(event.body)
   const description = body.event.text.split(' ').slice(2).join(' ').trim() // Remove the first two words from text like "<user> request description"
 
@@ -47,6 +45,7 @@ module.exports.handler = async event => {
       requester,
       clientSlackThread: body.event.ts,
       clientSlackChannel: body.event.channel,
+      slackTeam: body.event.team,
       platform: config.get('PLATFORMS.SLACK')
     },
     json: true

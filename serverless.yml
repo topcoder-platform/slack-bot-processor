@@ -12,12 +12,16 @@ provider:
     DYNAMODB_ENDPOINT: http://localhost:8000
 
     # Client Slack bot configuration
-    ADMIN_USER_TOKEN: xoxp-751151625041-759423359383-853578595331-3e89d61bdc9649a5580fb30a3047095f
-    BOT_TOKEN: xoxb-751151625041-759783514870-30P08WjUMLlKWunLhxnzdKVo
+    CLIENT_ID: '751151625041.751156216241'
+    CLIENT_SECRET: f4adf8e2b83ac725cfdd7bfe3cc6941c
     CLIENT_SIGNING_SECRET: 52810ea6b0cf1e67b2861be8bddce102
+    ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=751151625041.751156216241&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
     
     # Central TC Lambda URI
     CENTRAL_LAMBDA_URI: 'http://localhost:3000'
+
+    # 128 bit Token encryption/decryption key used by Database. You can set this to any string (128 bit) or just use the default value provided here
+    CRYPTO_KEY: 'p3s6v9y$B&E(H+Mb'
 
 functions:
   events:
@@ -51,6 +55,22 @@ functions:
       - http:
           path: approve
           method: post
+  
+  signIn:
+    handler: src/functions/signIn.handler
+    description: Returns the Add to slack button to sign in
+    events:
+      - http:
+          path: signin
+          method: get
+
+  auth:
+    handler: src/functions/auth.handler
+    description: Handles oauth redirect
+    events:
+      - http:
+          path: auth/redirect
+          method: get
 
 plugins:
   - serverless-offline

@@ -5,11 +5,9 @@
 const HttpStatus = require('http-status-codes')
 const config = require('config')
 const schema = require('../common/schema')
-const { getSlackWebClient } = require('../common/helper')
-const { getProject } = require('../common/dbHelper')
+const { getSlackWebClient, decrypt } = require('../common/helper')
+const { getProject, getClientByTeamId } = require('../common/dbHelper')
 const logger = require('../common/logger')
-
-const slackWebClient = getSlackWebClient()
 
 module.exports.handler = async event => {
   try {
@@ -32,6 +30,18 @@ module.exports.handler = async event => {
         })
       }
     }
+
+    const client = await getClientByTeamId(project.slackTeam)
+    if (!client) {
+      return {
+        statusCode: HttpStatus.UNAUTHORIZED,
+        body: JSON.stringify({
+          name: 'Topbot is not installed in client workspace'
+        })
+      }
+    }
+
+    const slackWebClient = getSlackWebClient(decrypt(client.botToken))
 
     // Post message to Client Slack
     await slackWebClient.chat.postMessage({
