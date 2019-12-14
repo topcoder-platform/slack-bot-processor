@@ -13,42 +13,51 @@ const INTERACTIVE_MESSAGE_TYPES = config.get('INTERACTIVE_MESSAGE_TYPES')
 
 module.exports.handler = async event => {
   try {
-    // Payload is an URL encoded string
-    if (event.payload) {
-      var payload = JSON.parse(querystring.decode(event.body).payload)
-      const client = await getClientByTeamId(payload.team.id)
-      if (!client) {
-        return {
-          statusCode: HttpStatus.UNAUTHORIZED
+    if (event.body) {
+      // Body is an URL encoded string
+      const body = querystring.decode(event.body)
+      
+      if(body.ssl_check || !body.payload) {
+        return { // Events received when interactive components are enabled
+          statusCode: HttpStatus.OK
         }
       }
-      var slackWebClient = getSlackWebClient(decrypt(client.botToken))
-
-      try {
-        switch (payload.type) {
-          case 'interactive_message':
-            switch (payload.actions[0].name) {
-              case INTERACTIVE_MESSAGE_TYPES.ACCEPT:
-                await handleAccept(payload, slackWebClient)
-                break
-              case INTERACTIVE_MESSAGE_TYPES.DECLINE:
-                await handleDecline(payload, slackWebClient)
-                break
-              default:
+      
+      var payload = JSON.parse(body.payload)
+      
+      if(payload.type === 'interactive_message') {
+        try {
+          const client = await getClientByTeamId(payload.team.id)
+          if (!client) {
+            return {
+              statusCode: HttpStatus.UNAUTHORIZED
             }
-            break
-          default:
+          }
+          var slackWebClient = getSlackWebClient(decrypt(client.botToken))
+          switch (payload.type) {
+            case 'interactive_message':
+              switch (payload.actions[0].name) {
+                case INTERACTIVE_MESSAGE_TYPES.ACCEPT:
+                  await handleAccept(payload, slackWebClient)
+                  break
+                case INTERACTIVE_MESSAGE_TYPES.DECLINE:
+                  await handleDecline(payload, slackWebClient)
+                  break
+                default:
+              }
+              break
+            default:
+          }
+        } catch (e) {
+          // Post error to Client Slack
+          return slackWebClient.chat.postMessage({
+            thread_ts: payload.message_ts,
+            channel: payload.channel.id,
+            text: 'An error occured. Please try again'
+          })
         }
-      } catch (e) {
-        // Post error to Client Slack
-        return slackWebClient.chat.postMessage({
-          thread_ts: payload.message_ts,
-          channel: payload.channel.id,
-          text: 'An error occured. Please try again'
-        })
       }
     }
-
     return { // Acknowledge to Slack that the message was received
       statusCode: HttpStatus.OK
     }
