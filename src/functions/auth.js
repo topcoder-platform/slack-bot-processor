@@ -6,10 +6,10 @@ const HttpStatus = require('http-status-codes')
 const config = require('config')
 const logger = require('../common/logger')
 const { put, getClientByTeamId, update } = require('../common/dbHelper')
-const { encrypt } = require('../common/helper')
+const { encrypt, findValueOfKeyInObject } = require('../common/helper')
 
 module.exports.handler = async (event) => {
-  const redirectUri = `https://${event.headers.Host}/auth/redirect`
+  const redirectUri = `https://${findValueOfKeyInObject(event.headers, 'host')}/auth/redirect`
   const authCode = event.queryStringParameters.code
   try {
     const response = JSON.parse(await rp({

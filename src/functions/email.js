@@ -7,9 +7,7 @@ const config = require('config')
 const { getProjectByClientSlackThread } = require('../common/dbHelper')
 const emailRegex = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i // eslint-disable-line
 
-module.exports.handler = async (event, slackWebClient) => {
-  const body = JSON.parse(event.body)
-
+module.exports.handler = async (body, slackWebClient) => {
   // Check if email command is issued inside a project request thread
   if (!body.event.thread_ts) {
     return slackWebClient.chat.postMessage({

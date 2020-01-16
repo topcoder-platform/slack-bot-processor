@@ -5,8 +5,7 @@ const rp = require('request-promise')
 const config = require('config')
 const { getProjectByClientSlackThread } = require('../common/dbHelper')
 
-module.exports.handler = async (event, slackWebClient) => {
-  const body = JSON.parse(event.body)
+module.exports.handler = async (body, slackWebClient) => {
   const description = body.event.text.split(' ').slice(2).join(' ').trim() // Remove the first two words from text like "<user> request description"
 
   // Check for empty description

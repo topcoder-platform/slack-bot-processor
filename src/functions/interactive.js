@@ -13,19 +13,10 @@ const INTERACTIVE_MESSAGE_TYPES = config.get('INTERACTIVE_MESSAGE_TYPES')
 
 module.exports.handler = async event => {
   try {
-    if (event.body) {
-      // Body is an URL encoded string
-      const body = querystring.decode(event.body)
-      
-      if(body.ssl_check || !body.payload) {
-        return { // Events received when interactive components are enabled
-          statusCode: HttpStatus.OK
-        }
-      }
-      
+    if (event && event.Records && event.Records[0] && event.Records[0].Sns) {
+      const body = querystring.decode(event.Records[0].Sns.Message)
       var payload = JSON.parse(body.payload)
-      
-      if(payload.type === 'interactive_message') {
+      if (payload.type === 'interactive_message') {
         try {
           const client = await getClientByTeamId(payload.team.id)
           if (!client) {
@@ -57,9 +48,6 @@ module.exports.handler = async event => {
           })
         }
       }
-    }
-    return { // Acknowledge to Slack that the message was received
-      statusCode: HttpStatus.OK
     }
   } catch (err) {
     logger.logFullError(err)

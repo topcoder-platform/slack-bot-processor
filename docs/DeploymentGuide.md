@@ -2,31 +2,43 @@
 
 ## Prerequisites
 
-1. Node.js > v10.14.2
+1. Node.js >= v12.14.1
 
-2. ngrok
+2. ngrok: https://ngrok.com/download
 
-Follow the below instructions in order to fully deploy the bot locally,
+3. localstack: https://github.com/localstack/localstack
 
-## Dynamodb setup
+## AWS Services
 
-If you already have dynamodb running, then you can skip the install and run steps 1 and 2
+Slack lambda uses Dynamodb to store/retrieve data and listens to SNS topics to obtain events from Topbot - Receiver.
 
-1. Download and install dynamodb from [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html)
+Both these services can be run locally using localstack.
 
-2. In terminal, navigate to the directory where you extracted DynamoDBLocal.jar, and enter the following command. `java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb`. This will start dynamodb on port 8000 by default.
+1. Start the localstack server, `localstack start`.You will obtain a port number for dynamodb and sns.
 
-3. **ENV** Provide aws dynamodb configuration options in the `provider:environment` field in `serverless.yml`. For local deployment, the values will be,
+2. **ENV** Update `provider:environment:DYNAMODB_ENDPOINT` field in `serverless.yml` with the dynamodb port,
     ```
-    environment:
+      environment:
         # AWS configuration
         AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
         AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
         AWS_REGION: FAKE_REGION
-        DYNAMODB_ENDPOINT: http://localhost:8000
+        DYNAMODB_ENDPOINT: http://localhost:4569 # This value
     ```
 
-3. [Optional] You can view the contents of dynamodb in your browser using a tool like [dynamodb-admin](https://www.npmjs.com/package/dynamodb-admin)
+3. **ENV** Update `custom:serverless-offline-sns:sns-endpoint` field in `serverless.yml` with the sns port,
+    ```
+    serverless-offline-sns:
+        port: 4001
+        debug: false
+        sns-endpoint: http://localhost:4575 # This value
+    ```
+
+Update `provider:environment:SNS_ENDPOINT` with this value.
+
+The other sns config values can be set the same unless you explicitly change it in sns.
+
+4. [Optional] You can view the contents of dynamodb in your browser using a tool like [dynamodb-admin](https://www.npmjs.com/package/dynamodb-admin)
 
 ##  TC Central Setup
 
@@ -80,6 +92,7 @@ Client secret -> `provider:environment:CLIENT_SECRET`
         CLIENT_ID: '751151625041.751156216241'
         CLIENT_SECRET: f4adf8e2b83ac725cfdd7bfe3cc6941c
         CLIENT_SIGNING_SECRET: 52810ea6b0cf1e67b2861be8bddce102
+        ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=751151625041.751156216241&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
         
         # Central TC Lambda URI
         CENTRAL_LAMBDA_URI: 'http://localhost:3000'
@@ -98,7 +111,11 @@ Client secret -> `provider:environment:CLIENT_SECRET`
 
 4. In the `slack-lambda` directory run `serverless offline` to start the Serverless API gateway on port 3001. The gateway runs the lambda functions on demand.
 
-5. Expose the server using `ngrok`. Run `ngrok http 3001`. You will obtain a url like `https://9bb718af.au.ngrok.io`. Note down this value. I will refer to it as `NGROK_URL`.
+5. You should see that the SNS topics, `client-slack-events` and `client-slack-interactive` are created. You can verify this using the aws cli,
+`aws --endpoint-url=http://localhost:4575 sns list-topics`
+
+6. Expose the server using `ngrok`. Run `ngrok http 3001`. You will obtain a url like `https://9bb718af.au.ngrok.io`. Note down this value. I will refer to it as `NGROK_URL`.
+
 
 **NOTE on ngrok** 
 

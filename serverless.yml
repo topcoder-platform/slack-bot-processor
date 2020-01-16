@@ -9,13 +9,13 @@ provider:
     AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
     AWS_REGION: FAKE_REGION
-    DYNAMODB_ENDPOINT: http://localhost:8000
+    DYNAMODB_ENDPOINT: http://localhost:4569
 
     # Client Slack bot configuration
-    CLIENT_ID: '751151625041.751156216241'
-    CLIENT_SECRET: f4adf8e2b83ac725cfdd7bfe3cc6941c
-    CLIENT_SIGNING_SECRET: 52810ea6b0cf1e67b2861be8bddce102
-    ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=751151625041.751156216241&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
+    CLIENT_ID: '755656631591.897500863475'
+    CLIENT_SECRET: 946f664be3cee7c6d26b15c038cdcc9b
+    CLIENT_SIGNING_SECRET: 4e9161fdeb959454ba6409d785acce1c
+    ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=755656631591.897500863475&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
     
     # Central TC Lambda URI
     CENTRAL_LAMBDA_URI: 'http://localhost:3000'
@@ -23,22 +23,43 @@ provider:
     # 128 bit Token encryption/decryption key used by Database. You can set this to any string (128 bit) or just use the default value provided here
     CRYPTO_KEY: 'p3s6v9y$B&E(H+Mb'
 
+    # SNS topics
+    CLIENT_SLACK_EVENTS_TOPIC: client-slack-events
+    CLIENT_SLACK_EVENTS_INTERACTIVE: client-slack-interactive
+
+    # SNS Configuration
+    SNS_ENDPOINT: http://localhost:4575
+    SNS_REGION: us-east-1
+    SNS_ACCOUNT_ID: 123456789012
+
 functions:
-  events:
-    handler: src/functions/events.handler
-    description: Handles slack events
+  client_slack_events:
+    handler: src/functions/receiver/events.handler
+    description: Handles slack events from Client Slack
     events:
       - http:
           path: slack/events
           method: post
 
-  interactive:
-    handler: src/functions/interactive.handler
-    description: Handles interactive components
+  client_slack_interactive:
+    handler: src/functions/receiver/interactive.handler
+    description: Handles slack interactive messages from Client Slack
     events:
       - http:
           path: slack/interactive
           method: post
+
+  events:
+    handler: src/functions/events.handler
+    description: Handles slack events
+    events:
+      - sns: client-slack-events
+
+  interactive:
+    handler: src/functions/interactive.handler
+    description: Handles interactive components
+    events:
+      - sns: client-slack-interactive
 
   response:
     handler: src/functions/response.handler
@@ -74,7 +95,13 @@ functions:
 
 plugins:
   - serverless-offline
-
+  - serverless-offline-sns
+  
 custom:
   serverless-offline:
     port: 3001
+
+  serverless-offline-sns:
+    port: 4001
+    debug: false
+    sns-endpoint: http://localhost:4575

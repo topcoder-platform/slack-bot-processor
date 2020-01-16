@@ -1,6 +1,5 @@
 
-module.exports.handler = async (event, slackWebClient) => {
-  const body = JSON.parse(event.body)
+module.exports.handler = async (body, slackWebClient) => {
   // Post help mesage
   await slackWebClient.chat.postMessage({
     text: 'Help!',
