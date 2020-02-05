@@ -10,14 +10,14 @@ provider:
     ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
     SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
     REGION: FAKE_REGION
-    DYNAMODB_ENDPOINT: http://localhost:4569
+    DYNAMODB_ENDPOINT: http://localhost:8000
 
     # Client Slack bot configuration
     CLIENT_ID: '755656631591.897500863475'
     CLIENT_SECRET: 946f664be3cee7c6d26b15c038cdcc9b
     CLIENT_SIGNING_SECRET: 4e9161fdeb959454ba6409d785acce1c
     ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=755656631591.897500863475&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
-    
+
     # Central TC Lambda URI
     CENTRAL_LAMBDA_URI: 'http://localhost:3000'
 
@@ -29,8 +29,8 @@ provider:
     CLIENT_SLACK_EVENTS_INTERACTIVE: client-slack-interactive
 
     # SNS Configuration
-    SNS_ENDPOINT: http://localhost:4575
-    SNS_REGION: us-east-1
+    SNS_ENDPOINT: http://localhost:4001
+    SNS_REGION: us-west-2
     SNS_ACCOUNT_ID: 123456789012
 
 functions:
@@ -77,7 +77,7 @@ functions:
       - http:
           path: approve
           method: post
-  
+
   signIn:
     handler: src/functions/signIn.handler
     description: Returns the Add to slack button to sign in
@@ -97,7 +97,7 @@ functions:
 plugins:
   - serverless-offline
   - serverless-offline-sns
-  
+
 custom:
   serverless-offline:
     port: 3001
@@ -105,4 +105,3 @@ custom:
   serverless-offline-sns:
     port: 4001
     debug: false
-    sns-endpoint: http://localhost:4575

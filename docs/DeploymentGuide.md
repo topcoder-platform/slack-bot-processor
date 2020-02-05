@@ -6,41 +6,52 @@
 
 2. ngrok: https://ngrok.com/download
 
-3. localstack: https://github.com/localstack/localstack
-
-## AWS Services
+## Dynamodb & SNS setup
 
 Slack lambda uses Dynamodb to store/retrieve data and listens to SNS topics to obtain events from Topbot - Receiver.
 
-Both these services can be run locally using localstack.
+If you already have dynamodb running, then you can skip the install and run steps 1 and 2
 
-1. Start the localstack server, `localstack start`.You will obtain a port number for dynamodb and sns.
+1. Download and install dynamodb from [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html)
 
-2. **ENV** Update `provider:environment:DYNAMODB_ENDPOINT` field in `serverless.yml` with the dynamodb port,
-    ```
-      environment:
-        # AWS configuration
-        AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
-        AWS_REGION: FAKE_REGION
-        DYNAMODB_ENDPOINT: http://localhost:4569 # This value
-    ```
+2. In terminal, navigate to the directory where you extracted DynamoDBLocal.jar, and enter the following command. `java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb`. This will start dynamodb on port 8000 by default.
 
-3. **ENV** Update `custom:serverless-offline-sns:sns-endpoint` field in `serverless.yml` with the sns port,
-    ```
-    serverless-offline-sns:
-        port: 4001
-        debug: false
-        sns-endpoint: http://localhost:4575 # This value
-    ```
+3. **ENV** Update `provider:environment:DYNAMODB_ENDPOINT` field in `serverless.yml` with the dynamodb port
+
+```yml
+environment:
+  # AWS configuration
+  AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
+  AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
+  AWS_REGION: FAKE_REGION
+  DYNAMODB_ENDPOINT: http://localhost:8000 # This value
+```
+
+4. `serverless-offline-sns` will run a SNS instance locally.
+
+**ENV** Update `custom:serverless-offline-sns:sns-endpoint` field in `serverless.yml` with the SNS port
+
+```yml
+serverless-offline-sns:
+  port: 4001 # This value
+  debug: false
+```
 
 Update `provider:environment:SNS_ENDPOINT` with this value.
 
-The other sns config values can be set the same unless you explicitly change it in sns.
+```yml
+environment:
+  # SNS Configuration
+  SNS_ENDPOINT: http://localhost:4001 # This value should be identical with the value in `serverless-offline-sns`
+  SNS_REGION: us-west-2
+  SNS_ACCOUNT_ID: 123456789012 # Dummy value in local setup
+```
 
-4. [Optional] You can view the contents of dynamodb in your browser using a tool like [dynamodb-admin](https://www.npmjs.com/package/dynamodb-admin)
+The other SNS config values can be set the same unless you explicitly change it in SNS.
 
-##  TC Central Setup
+5. [Optional] You can view the contents of dynamodb in your browser using a tool like [dynamodb-admin](https://www.npmjs.com/package/dynamodb-admin)
+
+## TC Central Setup
 
 In order to deploy Slack lambda, you will need to first deply TC Central. The Slack account created there will represent Topcoder slack. You will then need to create an app in that workspace. This app will then be installed by clients in their workspaces.
 
@@ -52,11 +63,11 @@ In order to deploy Slack lambda, you will need to first deply TC Central. The Sl
 
 ![](images/create_app.png)
 
-3. **ENV** Go to app credentials from `Settings` -> `Basic Information`. 
+3. **ENV** Go to app credentials from `Settings` -> `Basic Information`.
 Update `serverless.yml` with the the values,
 Client id -> `provider:environment:CLIENT_ID` (**Make sure to use quotes around CLIENT_ID**)
 Client secret -> `provider:environment:CLIENT_SECRET`
-`Signing Secret` -> `provider:environment:CLIENT_SIGNING_SECRET` 
+`Signing Secret` -> `provider:environment:CLIENT_SIGNING_SECRET`
 
 ![](images/credentials.png)
 
@@ -69,37 +80,39 @@ Client secret -> `provider:environment:CLIENT_SECRET`
 
 **Do not install the app into workspace. This app is meant to be installed in client workspace and not Topcoder workspace.**
 
-9. **ENV** Slack lambda needs to communicate with TC Central lambda. Set the URI of TC Central lambda in the `provider:environment:CENTRAL_LAMBDA_URI` field in `serverless.yml`. If you haven't already deployed TC Central lambda, you can deploy it at this port later after Slack lambda is deployed. 
-    
+6. **ENV** Slack lambda needs to communicate with TC Central lambda. Set the URI of TC Central lambda in the `provider:environment:CENTRAL_LAMBDA_URI` field in `serverless.yml`. If you haven't already deployed TC Central lambda, you can deploy it at this port later after Slack lambda is deployed.
+
  By default, TC Central lambda runs on port 3000. So if you are using defaults, you don't need to change this field.
 
-10. `serverless.yml` should look something like,
-    ```
-    service: slack_lambda
+7. `serverless.yml` should look something like,
 
-    provider:
-    name: aws
-    runtime: nodejs10.x
+```yml
+service: slackBotLambda
 
-    environment:
-        # AWS configuration
-        AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
-        AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
-        AWS_REGION: FAKE_REGION
-        DYNAMODB_ENDPOINT: http://localhost:8000
+provider:
+  name: aws
+  runtime: nodejs10.x
+  profile: bot-dev
 
-        # Client Slack bot configuration
-        CLIENT_ID: '751151625041.751156216241'
-        CLIENT_SECRET: f4adf8e2b83ac725cfdd7bfe3cc6941c
-        CLIENT_SIGNING_SECRET: 52810ea6b0cf1e67b2861be8bddce102
-        ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=751151625041.751156216241&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
-        
-        # Central TC Lambda URI
-        CENTRAL_LAMBDA_URI: 'http://localhost:3000'
+  environment:
+    # AWS configuration
+    AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
+    AWS_REGION: FAKE_REGION
+    DYNAMODB_ENDPOINT: http://localhost:8000
 
-        # Token encryption/decryption key
-        CRYPTO_KEY: '3i)!Pf#"kq-)C[;UN-AVQ/doOk,[24'
-    ```
+    # Client Slack bot configuration
+    CLIENT_ID: '751151625041.751156216241'
+    CLIENT_SECRET: f4adf8e2b83ac725cfdd7bfe3cc6941c
+    CLIENT_SIGNING_SECRET: 52810ea6b0cf1e67b2861be8bddce102
+    ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=751151625041.751156216241&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
+
+    # Central TC Lambda URI
+    CENTRAL_LAMBDA_URI: 'http://localhost:3000'
+
+    # Token encryption/decryption key
+    CRYPTO_KEY: '3i)!Pf#"kq-)C[;UN-AVQ/doOk,[24'
+```
 
 ## Start Slack lambda server
 
@@ -112,14 +125,14 @@ Client secret -> `provider:environment:CLIENT_SECRET`
 4. In the `slack-lambda` directory run `serverless offline` to start the Serverless API gateway on port 3001. The gateway runs the lambda functions on demand.
 
 5. You should see that the SNS topics, `client-slack-events` and `client-slack-interactive` are created. You can verify this using the aws cli,
-`aws --endpoint-url=http://localhost:4575 sns list-topics`
+`aws --endpoint-url=http://localhost:4001 sns list-topics`
 
-6. Expose the server using `ngrok`. Run `ngrok http 3001`. You will obtain a url like `https://9bb718af.au.ngrok.io`. Note down this value. I will refer to it as `NGROK_URL`.
+6. Expose the server using `ngrok`. Run `ngrok http 3001 --region au`. You will obtain a url like `https://9bb718af.au.ngrok.io`. Note down this value. I will refer to it as `NGROK_URL`.
 
 
-**NOTE on ngrok** 
+**NOTE on ngrok**
 
-If you are using a free version of ngrok, it allows only one simultaneous connection. This is a problem if you want to run both Slack lambda and TC Central and expose both using ngrok. 
+If you are using a free version of ngrok, it allows only one simultaneous connection. This is a problem if you want to run both Slack lambda and TC Central and expose both using ngrok.
 
 The solution is to use the `--region` field while starting ngrok. So, if you're already running ngrok, you will see a region such as `Region United States (us)` in the terminal.
 To start another ngrok session just choose another region to run in by executing `ngrok http 3001 --region au`. This will start ngrok in `Region Australia (au)`
@@ -154,7 +167,7 @@ To start another ngrok session just choose another region to run in by executing
 
 1. Go to https://api.slack.com/apps and click on the app that you created earlier in `Create a Slack App`
 
-2. Click on `Settings` -> `Manage distribution`. 
+2. Click on `Settings` -> `Manage distribution`.
 Check `Remove Hard Coded Information`. The `Activate Public Distribution` button should now become enabled. Click it.
 
 ![](images/public.png)

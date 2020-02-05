@@ -4,7 +4,7 @@
 
 Both TC Central and Slack lambda need to be up and running. They both need to have their endpoints exposed by ngrok. They also need events and interactive component endpoints configured in Slack.
 
-So you will have two Slack workspaces, 
+So you will have two Slack workspaces,
 one where TC Central bot is installed - `Topcoder Workspace`
 and another where Slack bot is installed - `Client Workspace`
 
@@ -95,7 +95,7 @@ A message with `Provide project name` is posted to slack
 
 This completes one flow. Repeat steps 1, 2 and 3 and then,
 
-4. Click on "Decline"
+7. Click on "Decline"
 
 Observe,
 
@@ -120,7 +120,7 @@ Help command,
 
 ## Edge cases
 
-1. Issue project request in a thread which already has a project. This needs to fail because of many error scenarios. One of them is that the `email` command uses the root thread id to identify a project. So if a thread has two projects, the `email` command will always choose the first project. The second project can never have users invited. 
+1. Issue project request in a thread which already has a project. This needs to fail because of many error scenarios. One of them is that the `email` command uses the root thread id to identify a project. So if a thread has two projects, the `email` command will always choose the first project. The second project can never have users invited.
 
 ![](images/project_exists.png)
 
