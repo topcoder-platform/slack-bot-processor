@@ -4,8 +4,10 @@
 
 const AWS = require('aws-sdk')
 const config = require('config')
+const logger = require('./logger')
 const projectsSchema = require('../tables/projects')
 const clientsSchema = require('../tables/clients')
+
 let documentClient = null
 
 /**
@@ -22,14 +24,23 @@ async function initialize () {
   const dynamodb = new AWS.DynamoDB()
   // Create tables if it does not exist already
 
-  const list = await dynamodb.listTables().promise()
-  if (!list.TableNames.includes(config.get('DYNAMODB.PROJECT_TABLE_NAME'))) {
-    await dynamodb.createTable(projectsSchema).promise()
-  }
+  const projectsTable = config.get('DYNAMODB.PROJECT_TABLE_NAME')
+  await dynamodb.createTable(projectsSchema).promise().catch((err) => {
+    if (err.code === 'ResourceInUseException') {
+      logger.warn(`Table already exists: ${projectsTable}`)
+    } else {
+      throw err
+    }
+  })
 
-  if (!list.TableNames.includes(config.get('DYNAMODB.SLACK_CLIENTS_TABLE_NAME'))) {
-    await dynamodb.createTable(clientsSchema).promise()
-  }
+  const slackClientsTable = config.get('DYNAMODB.SLACK_CLIENTS_TABLE_NAME')
+  await dynamodb.createTable(clientsSchema).promise().catch((err) => {
+    if (err.code === 'ResourceInUseException') {
+      logger.warn(`Table already exists: ${slackClientsTable}`)
+    } else {
+      throw err
+    }
+  })
 
   documentClient = new AWS.DynamoDB.DocumentClient()
 }

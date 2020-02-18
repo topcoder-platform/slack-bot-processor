@@ -1,8 +1,9 @@
 const querystring = require('querystring')
 const HttpStatus = require('http-status-codes')
 const { authenticateSlackRequest, getSnsClient, getArnForTopic } = require('../../common/helper')
+const logger = require('../../common/logger')
 
-module.exports.handler = async event => {
+module.exports.handler = logger.traceFunction('receiver.interactive.handler', async event => {
   const body = querystring.decode(event.body)
   if (body.ssl_check || !body.payload) {
     return { // Events received when interactive components are enabled for the first time
@@ -28,7 +29,7 @@ module.exports.handler = async event => {
       })
     }
   } catch (err) {
-    console.log('err : ', err)
+    logger.logFullError(err)
     return {
       statusCode: 500,
       body: JSON.stringify({
@@ -36,7 +37,7 @@ module.exports.handler = async event => {
       })
     }
   }
-}
+})
 
 async function publishSnsTopic (data) {
   const params = {

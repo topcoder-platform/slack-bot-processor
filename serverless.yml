@@ -5,6 +5,15 @@ provider:
   runtime: nodejs10.x
   profile: bot-dev
 
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'sns:Publish'
+        - 'sns:GetTopicAttributes'
+      Resource:
+        - !Ref clientSlackEvents
+        - !Ref clientSlackInteractive
+
   environment:
     # AWS configuration
     ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
@@ -13,10 +22,10 @@ provider:
     DYNAMODB_ENDPOINT: http://localhost:8000
 
     # Client Slack bot configuration
-    CLIENT_ID: '755656631591.897500863475'
-    CLIENT_SECRET: 946f664be3cee7c6d26b15c038cdcc9b
-    CLIENT_SIGNING_SECRET: 4e9161fdeb959454ba6409d785acce1c
-    ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=755656631591.897500863475&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
+    CLIENT_ID: '866134784247.856745646417'
+    CLIENT_SECRET: ec1e7f444e8eafa0aee7a9d36a26abe4
+    CLIENT_SIGNING_SECRET: 87a7af09774e3550f8f4c9c201373aca
+    ADD_TO_SLACK_BUTTON: '<a href="https://slack.com/oauth/authorize?client_id=866134784247.856745646417&scope=bot,channels:write,users:read"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"></a>'
 
     # Central TC Lambda URI
     CENTRAL_LAMBDA_URI: 'http://localhost:3000'
@@ -25,12 +34,12 @@ provider:
     CRYPTO_KEY: 'p3s6v9y$B&E(H+Mb'
 
     # SNS topics
-    CLIENT_SLACK_EVENTS_TOPIC: client-slack-events
-    CLIENT_SLACK_EVENTS_INTERACTIVE: client-slack-interactive
+    CLIENT_SLACK_EVENTS_TOPIC: ${self:custom.sns.clientSlackEvents}
+    CLIENT_SLACK_EVENTS_INTERACTIVE: ${self:custom.sns.clientSlackInteractive}
 
     # SNS Configuration
     SNS_ENDPOINT: http://localhost:4001 # local development only
-    SNS_REGION: us-west-2
+    SNS_REGION: ${self:custom.region}
     SNS_ACCOUNT_ID: 123456789012
 
 functions:
@@ -54,13 +63,17 @@ functions:
     handler: src/functions/events.handler
     description: Handles slack events
     events:
-      - sns: client-slack-events
+      - sns:
+          arn: !Ref clientSlackEvents
+          topicName: ${self:custom.sns.clientSlackEvents}
 
   interactive:
     handler: src/functions/interactive.handler
     description: Handles interactive components
     events:
-      - sns: client-slack-interactive
+      - sns:
+          arn: !Ref clientSlackInteractive
+          topicName: ${self:custom.sns.clientSlackInteractive}
 
   response:
     handler: src/functions/response.handler
@@ -101,7 +114,21 @@ plugins:
 custom:
   serverless-offline:
     port: 3001
-
   serverless-offline-sns:
     port: 4001
     debug: false
+  sns:
+    clientSlackEvents: client-slack-events
+    clientSlackInteractive: client-slack-interactive
+  region: ${opt:region, self:provider.region}
+
+resources:
+  Resources:
+    clientSlackEvents:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.sns.clientSlackEvents}
+    clientSlackInteractive:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.sns.clientSlackInteractive}

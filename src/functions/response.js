@@ -9,7 +9,7 @@ const { getSlackWebClient, decrypt } = require('../common/helper')
 const { getProject, getClientByTeamId } = require('../common/dbHelper')
 const logger = require('../common/logger')
 
-module.exports.handler = async event => {
+module.exports.handler = logger.traceFunction('response.handler', async event => {
   try {
     // Validate request
     const { error, value } = schema.responseSchema.validate(JSON.parse(event.body))
@@ -78,4 +78,4 @@ module.exports.handler = async event => {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR
     }
   }
-}
+})

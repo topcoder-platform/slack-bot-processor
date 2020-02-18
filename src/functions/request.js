@@ -4,8 +4,9 @@
 const rp = require('request-promise')
 const config = require('config')
 const { getProjectByClientSlackThread } = require('../common/dbHelper')
+const logger = require('../common/logger')
 
-module.exports.handler = async (body, slackWebClient) => {
+module.exports.handler = logger.traceFunction('request.handler', async (body, slackWebClient) => {
   const description = body.event.text.split(' ').slice(2).join(' ').trim() // Remove the first two words from text like "<user> request description"
 
   // Check for empty description
@@ -56,4 +57,4 @@ module.exports.handler = async (body, slackWebClient) => {
     channel: body.event.channel,
     text: 'Request posted to Topcoder'
   })
-}
+})
