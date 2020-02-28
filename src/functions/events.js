@@ -42,16 +42,16 @@ async function handleCommand (command, body, slackWebClient) {
       }
     }
   } catch (err) {
+    logger.logFullError(err)
     await slackWebClient.chat.postMessage({
       thread_ts: body.event.ts,
       channel: body.event.channel,
       text: 'An error occured while processing your command. Please try again.'
     })
-    logger.logFullError(err)
   }
 }
 
-module.exports.handler = async event => {
+module.exports.handler = logger.traceFunction('events.handler', async event => {
   if (event && event.Records && event.Records[0] && event.Records[0].Sns) {
     const body = JSON.parse(event.Records[0].Sns.Message)
     const client = await getClientByTeamId(body.team_id)
@@ -64,4 +64,4 @@ module.exports.handler = async event => {
     const command = body.event.text.replace(eventTextRegex, '').trim().replace(firstWordRegex, '').trim().toLowerCase() // Get the command from text like "<user_name> command other_text"
     await handleCommand(command, body, slackWebClient)
   }
-}
+})

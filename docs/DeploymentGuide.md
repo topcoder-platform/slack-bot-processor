@@ -21,9 +21,9 @@ If you already have dynamodb running, then you can skip the install and run step
 ```yml
 environment:
   # AWS configuration
-  AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
-  AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
-  AWS_REGION: FAKE_REGION
+  ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
+  SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
+  REGION: FAKE_REGION
   DYNAMODB_ENDPOINT: http://localhost:8000 # This value
 ```
 
@@ -96,9 +96,9 @@ provider:
 
   environment:
     # AWS configuration
-    AWS_ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
-    AWS_REGION: FAKE_REGION
+    ACCESS_KEY_ID: FAKE_ACCESS_KEY_ID
+    SECRET_ACCESS_KEY: FAKE_SECRET_ACCESS_KEY
+    REGION: FAKE_REGION
     DYNAMODB_ENDPOINT: http://localhost:8000
 
     # Client Slack bot configuration

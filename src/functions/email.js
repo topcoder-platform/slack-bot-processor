@@ -5,9 +5,11 @@ const rp = require('request-promise')
 const HttpStatus = require('http-status-codes')
 const config = require('config')
 const { getProjectByClientSlackThread } = require('../common/dbHelper')
+const logger = require('../common/logger')
+
 const emailRegex = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i // eslint-disable-line
 
-module.exports.handler = async (body, slackWebClient) => {
+module.exports.handler = logger.traceFunction('email.handler', async (body, slackWebClient) => {
   // Check if email command is issued inside a project request thread
   if (!body.event.thread_ts) {
     return slackWebClient.chat.postMessage({
@@ -92,6 +94,7 @@ module.exports.handler = async (body, slackWebClient) => {
       text: `User with ${email} has been successfully invited to the project. The project can be accessed at ${config.get('CONNECT.PROJECT_URI')(project.connectProjectId)}`
     })
   } catch (e) {
+    logger.logFullError(e)
     // Email has already been invited
     if (e.statusCode === HttpStatus.FORBIDDEN) {
       return slackWebClient.chat.postMessage({
@@ -103,4 +106,4 @@ module.exports.handler = async (body, slackWebClient) => {
       throw e
     }
   }
-}
+})

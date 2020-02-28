@@ -1,5 +1,6 @@
+const logger = require('../common/logger')
 
-module.exports.handler = async (body, slackWebClient) => {
+module.exports.handler = logger.traceFunction('help.handler', async (body, slackWebClient) => {
   // Post help mesage
   await slackWebClient.chat.postMessage({
     text: 'Help!',
@@ -34,4 +35,4 @@ module.exports.handler = async (body, slackWebClient) => {
     }
     ])
   })
-}
+})

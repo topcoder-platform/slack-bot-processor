@@ -8,7 +8,7 @@ const logger = require('../common/logger')
 const { put, getClientByTeamId, update } = require('../common/dbHelper')
 const { encrypt, findValueOfKeyInObject } = require('../common/helper')
 
-module.exports.handler = async (event) => {
+module.exports.handler = logger.traceFunction('auth.handler', async (event) => {
   const redirectUri = `https://${findValueOfKeyInObject(event.headers, 'host')}/auth/redirect`
   const authCode = event.queryStringParameters.code
   try {
@@ -71,4 +71,4 @@ module.exports.handler = async (event) => {
       body: 'Something went wrong. Please try again'
     }
   }
-}
+})

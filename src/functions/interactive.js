@@ -11,7 +11,7 @@ const logger = require('../common/logger')
 
 const INTERACTIVE_MESSAGE_TYPES = config.get('INTERACTIVE_MESSAGE_TYPES')
 
-module.exports.handler = async event => {
+module.exports.handler = logger.traceFunction('interactive.handler', async event => {
   try {
     if (event && event.Records && event.Records[0] && event.Records[0].Sns) {
       const body = querystring.decode(event.Records[0].Sns.Message)
@@ -52,7 +52,7 @@ module.exports.handler = async event => {
   } catch (err) {
     logger.logFullError(err)
   }
-}
+})
 
 /**
  * Handles click on the Accept button
