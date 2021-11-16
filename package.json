@@ -18,7 +18,7 @@
   "dependencies": {
     "@hapi/joi": "^16.1.7",
     "@slack/web-api": "^5.5.0",
-    "aws-sdk": "^2.578.0",
+    "aws-sdk": "^2.814.0",
     "config": "^3.2.4",
     "get-parameter-names": "^0.3.0",
     "http-status-codes": "^1.4.0",
